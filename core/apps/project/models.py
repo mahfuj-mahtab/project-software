@@ -18,7 +18,7 @@ class Department(models.Model):
     name = models.CharField(max_length=255)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="departments")
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
-
+    
     def __str__(self):
         return self.name
 
@@ -31,19 +31,22 @@ class Team(models.Model):
 
     def __str__(self):
         return self.name
+class EmployeeRole(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=255)
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="EmployeeRoleteams")
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="EmployeeRoleteams")
+
+    def __str__(self):
+        return self.name
 
 
 class Employee(models.Model):
-    ROLE_CHOICES = [
-        ('admin', 'Admin'),
-        ('manager', 'Manager'),
-        ('employee', 'Employee'),
-    ]
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="employee_profile")
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="employees")
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="employees", null=True, blank=True)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    role = models.ManyToManyField(EmployeeRole)
 
     def __str__(self):
         return f"{self.user.first_name} - {self.organization.name}"
@@ -65,6 +68,7 @@ class Project(models.Model):
     deadline = models.DateTimeField()
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="projects")
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_projects")
+    team = models.ManyToManyField(Team, related_name="created_team_projects")
 
 
 class TaskList(models.Model):
