@@ -67,6 +67,7 @@ class Project(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     deadline = models.DateTimeField()
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="projects")
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="department",null=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_projects")
     team = models.ManyToManyField(Team, related_name="created_team_projects")
 
