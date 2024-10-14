@@ -45,7 +45,7 @@ class Employee(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="employee_profile")
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="employees")
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="employees", null=True, blank=True)
+    team = models.ManyToManyField(Team, null=True, blank=True)
     role = models.ManyToManyField(EmployeeRole)
 
     def __str__(self):
