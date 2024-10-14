@@ -76,7 +76,7 @@ class ProjectSingleProject(APIView):
         except model.DoesNotExist:
             return None
 
-    def get(self, request, userId, organizationId, departmentId):
+    def get(self, request, userId, organizationId, departmentId,projectId):
         user = self.get_object_or_404(User, id=userId)
         if not user:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -106,7 +106,7 @@ class ProjectSingleProject(APIView):
             # Iterate over the teams and check if the employee is part of each team
             for team in teams:
                 if team.id in employee_team_ids:
-                    project = self.get_object_or_404(Project, organization=organization, department=department,team = team)
+                    project = self.get_object_or_404(Project, organization=organization, department=department,team = team,id = projectId)
                     if not project:
                         return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
                     tasklists = TaskList.objects.filter(project = project)
