@@ -23,6 +23,27 @@ class ProjectOrganization(APIView):
         employee = Employee.objects.filter(user = user)
         employee_serialisers = EmployeeSerializer(employee,many = True)
         return Response({'data' : employee_serialisers.data},status=status.HTTP_200_OK)
+    def post(self,request,userId):
+        try:
+            user = User.objects.get(id = userId)
+        except User.DoesNotExist:
+            return Response({'error': 'User not available'},status = status.HTTP_403_FORBIDDEN)
+
+        data = request.data
+        if(len(data['organization_name']) == 0):
+            return Response({'error': 'Ornagization name cannot be empty'},status = status.HTTP_404_NOT_FOUND)
+        else:
+            organization = Organization(name = data['organization_name'], created_by = user)
+            organization.save()
+            department = Department(name = 'Administration',organization = organization,created_by = user)
+            department.save()
+            team = Team(name = 'Administration',organization = organization,created_by = user,department = department)
+            team.save()
+            employeerole = EmployeeRole(name = 'Administration',organization = organization,department = department)
+            employeerole.save()
+            employee = Employee(organization = organization,user = user,team = team,role = employeerole)
+            employee.save()
+            return Response({'success' : 'Organization Created'},status=status.HTTP_200_OK)
 class ProjectDepartment(APIView):
     def get(self,request,userId,organizationId):
         try:
