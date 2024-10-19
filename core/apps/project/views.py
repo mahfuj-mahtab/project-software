@@ -63,6 +63,26 @@ class ProjectDepartment(APIView):
             return Response({'error': 'Employee not available'},status = status.HTTP_403_FORBIDDEN)
         organization_serializer = OrganizationSerializer(organization)
         return Response({'data' : organization_serializer.data},status=status.HTTP_200_OK)
+    def post(self,request,userId,organizationId):
+        data = request.data
+        try:
+            user = User.objects.get(id = userId)
+        except User.DoesNotExist:
+            return Response({'error': 'User not available'},status = status.HTTP_403_FORBIDDEN)
+        try:
+            organization = Organization.objects.get(id = organizationId)
+        except Organization.DoesNotExist:
+            return Response({'error': 'Organization not available'},status = status.HTTP_403_FORBIDDEN)
+        try:
+            employee = Employee.objects.get(user = user,organization = organization)
+        except Employee.DoesNotExist:
+            return Response({'error': 'Employee not available'},status = status.HTTP_403_FORBIDDEN)
+        if(len(data['department_name']) == 0):
+            return Response({'error': 'Department name cannot be empty'},status = status.HTTP_404_NOT_FOUND)
+        department = Department(name = data['department_name'],organization = organization,created_by = user)
+        department.save()
+        return Response({'success' : 'Department Created'},status=status.HTTP_200_OK)
+
 class ProjectProject(APIView):
     def get_object_or_404(self, model, **kwargs):
         try:
