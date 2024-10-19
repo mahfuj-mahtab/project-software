@@ -20,7 +20,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
     teams = TeamSerializer(many = True,source = 'team')
     class Meta:
         model = Employee
-        fields = '__all__'
+        exclude = ('user',)
+        depth = 1
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project

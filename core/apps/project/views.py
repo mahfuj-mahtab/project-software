@@ -41,7 +41,10 @@ class ProjectOrganization(APIView):
             team.save()
             employeerole = EmployeeRole(name = 'Administration',organization = organization,department = department)
             employeerole.save()
-            employee = Employee(organization = organization,user = user,team = team,role = employeerole)
+            employee = Employee(organization = organization,user = user)
+            employee.save()
+            employee.team.set([team])
+            employee.role.set([employeerole])
             employee.save()
             return Response({'success' : 'Organization Created'},status=status.HTTP_200_OK)
 class ProjectDepartment(APIView):
