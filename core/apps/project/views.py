@@ -113,6 +113,42 @@ class ProjectProject(APIView):
         # Serialize and return project data
         project_serializer = ProjectSerializer(projects, many=True)
         return Response({'data': project_serializer.data}, status=status.HTTP_200_OK)
+    def post(self, request, userId, organizationId, departmentId):
+        user = self.get_object_or_404(User, id=userId)
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        organization = self.get_object_or_404(Organization, id=organizationId)
+        if not organization:
+            return Response({'error': 'Organization not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        employee = self.get_object_or_404(Employee, user=user, organization=organization)
+        if not employee:
+            return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        department = self.get_object_or_404(Department, organization=organization, id=departmentId)
+        if not department:
+            return Response({'error': 'Department not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Query optimization with select_related (if applicable)
+        data = request.data
+        project_name = data['project_name']
+        project_description = data['project_description']
+        project_deadline = data['project_deadline']
+        project_team_id = data['project_team_id']
+        try:
+            team = Team.objects.get(id = project_team_id)
+        except Team.DoesNotExist:
+            return Response({'error': 'Team not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+    
+        if(len(data['project_name']) == 0):
+            return Response({'error': 'Project name cannot be empty'},status = status.HTTP_404_NOT_FOUND)
+        project = Project(name = data['project_name'],description = project_description,deadline = project_deadline,organization = organization,created_by = user,department = department)
+        project.save()
+        project.team.set([team])
+        project.save()
+        return Response({'success' : 'Project Created'},status=status.HTTP_200_OK)
 class ProjectSingleProject(APIView):
     def get_object_or_404(self, model, **kwargs):
         try:
