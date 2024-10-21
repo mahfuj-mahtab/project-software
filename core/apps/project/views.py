@@ -204,3 +204,87 @@ class ProjectSingleProject(APIView):
         
 
         # Serialize and return project data
+class ProjectTeams(APIView):
+    def get_object_or_404(self, model, **kwargs):
+        try:
+            return model.objects.get(**kwargs)
+        except model.DoesNotExist:
+            return None
+
+    def get(self, request, userId, organizationId, departmentId):
+        user = self.get_object_or_404(User, id=userId)
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        organization = self.get_object_or_404(Organization, id=organizationId)
+        if not organization:
+            return Response({'error': 'Organization not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # employee = self.get_object_or_404(Employee, user=user, organization=organization)
+        # if not employee:
+        #     return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        department = self.get_object_or_404(Department, organization=organization, id=departmentId)
+        if not department:
+            return Response({'error': 'Department not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Fetch the employee along with their teams using prefetch_related
+        employee = Employee.objects.filter(organization=organization, user=user).prefetch_related('team').first()
+
+        if employee:
+
+            # Fetch all teams under the organization and department
+            teams = Team.objects.filter(organization=organization, department=department)
+
+            # Iterate over the teams and check if the employee is part of each team
+            team_serializers = TeamSerializer(teams, many = True)
+            return Response({"data" : team_serializers.data},status=status.HTTP_200_OK)
+
+        else:
+            return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+        # Query optimization with select_related (if applicable)
+        
+
+        # Serialize and return project data
+    def post(self, request, userId, organizationId, departmentId):
+        user = self.get_object_or_404(User, id=userId)
+        data = request.data
+        team_name = data['team_name']
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        organization = self.get_object_or_404(Organization, id=organizationId)
+        if not organization:
+            return Response({'error': 'Organization not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # employee = self.get_object_or_404(Employee, user=user, organization=organization)
+        # if not employee:
+        #     return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        department = self.get_object_or_404(Department, organization=organization, id=departmentId)
+        if not department:
+            return Response({'error': 'Department not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Fetch the employee along with their teams using prefetch_related
+        employee = Employee.objects.filter(organization=organization, user=user).prefetch_related('team').first()
+
+        if employee:
+            # TODO : Employee permission need to check if employee have permission to create or not
+            # Fetch all teams under the organization and department
+            team = Team(name = team_name,organization = organization,department = department,created_by = user)
+            team.save()
+
+            # Iterate over the teams and check if the employee is part of each team
+            
+            return Response({"data" : 'Team created successfully'},status=status.HTTP_200_OK)
+
+        else:
+            return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+
+
+        # Query optimization with select_related (if applicable)
+        
+
+        # Serialize and return project data
