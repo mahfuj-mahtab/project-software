@@ -5,8 +5,12 @@ from rest_framework import status
 from django.contrib.auth.models import User
 from .models import *
 from .serializers import *
+from rest_framework.permissions import IsAuthenticated
+
 # Create your views here.
 class ProjectOrganization(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self,request,userId):
         organizations_data = {
             'my_organizations' : [],
@@ -35,11 +39,11 @@ class ProjectOrganization(APIView):
         else:
             organization = Organization(name = data['organization_name'], created_by = user)
             organization.save()
-            department = Department(name = 'Administration',organization = organization,created_by = user)
-            department.save()
-            team = Team(name = 'Administration',organization = organization,created_by = user,department = department)
+            # department = Department(name = 'Administration',organization = organization,created_by = user)
+            # department.save()
+            team = Team(name = 'Administration',organization = organization,created_by = user)
             team.save()
-            employeerole = EmployeeRole(name = 'Administration',organization = organization,department = department)
+            employeerole = EmployeeRole(name = 'Administrator',organization = organization)
             employeerole.save()
             employee = Employee(organization = organization,user = user)
             employee.save()
@@ -48,6 +52,8 @@ class ProjectOrganization(APIView):
             employee.save()
             return Response({'success' : 'Organization Created'},status=status.HTTP_200_OK)
 class ProjectDepartment(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self,request,userId,organizationId):
         try:
             user = User.objects.get(id = userId)
@@ -84,13 +90,15 @@ class ProjectDepartment(APIView):
         return Response({'success' : 'Department Created'},status=status.HTTP_200_OK)
 
 class ProjectProject(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get_object_or_404(self, model, **kwargs):
         try:
             return model.objects.get(**kwargs)
         except model.DoesNotExist:
             return None
 
-    def get(self, request, userId, organizationId, departmentId):
+    def get(self, request, userId, organizationId):
         user = self.get_object_or_404(User, id=userId)
         if not user:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -103,17 +111,15 @@ class ProjectProject(APIView):
         if not employee:
             return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        department = self.get_object_or_404(Department, organization=organization, id=departmentId)
-        if not department:
-            return Response({'error': 'Department not found'}, status=status.HTTP_404_NOT_FOUND)
+       
 
         # Query optimization with select_related (if applicable)
-        projects = Project.objects.filter(organization=organization, department=department)
+        projects = Project.objects.filter(organization=organization)
 
         # Serialize and return project data
         project_serializer = ProjectSerializer(projects, many=True)
         return Response({'data': project_serializer.data}, status=status.HTTP_200_OK)
-    def post(self, request, userId, organizationId, departmentId):
+    def post(self, request, userId, organizationId):
         user = self.get_object_or_404(User, id=userId)
         if not user:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -126,9 +132,7 @@ class ProjectProject(APIView):
         if not employee:
             return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        department = self.get_object_or_404(Department, organization=organization, id=departmentId)
-        if not department:
-            return Response({'error': 'Department not found'}, status=status.HTTP_404_NOT_FOUND)
+        
 
         # Query optimization with select_related (if applicable)
         data = request.data
@@ -144,19 +148,21 @@ class ProjectProject(APIView):
     
         if(len(data['project_name']) == 0):
             return Response({'error': 'Project name cannot be empty'},status = status.HTTP_404_NOT_FOUND)
-        project = Project(name = data['project_name'],description = project_description,deadline = project_deadline,organization = organization,created_by = user,department = department)
+        project = Project(name = data['project_name'],description = project_description,deadline = project_deadline,organization = organization,created_by = user)
         project.save()
         project.team.set([team])
         project.save()
         return Response({'success' : 'Project Created'},status=status.HTTP_200_OK)
 class ProjectSingleProject(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get_object_or_404(self, model, **kwargs):
         try:
             return model.objects.get(**kwargs)
         except model.DoesNotExist:
             return None
 
-    def get(self, request, userId, organizationId, departmentId,projectId):
+    def get(self, request, userId, organizationId,projectId):
         user = self.get_object_or_404(User, id=userId)
         if not user:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -169,9 +175,7 @@ class ProjectSingleProject(APIView):
         # if not employee:
         #     return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        department = self.get_object_or_404(Department, organization=organization, id=departmentId)
-        if not department:
-            return Response({'error': 'Department not found'}, status=status.HTTP_404_NOT_FOUND)
+        
 
         # Fetch the employee along with their teams using prefetch_related
         employee = Employee.objects.filter(organization=organization, user=user).prefetch_related('team').first()
@@ -181,12 +185,12 @@ class ProjectSingleProject(APIView):
             employee_team_ids = employee.team.values_list('id', flat=True)
 
             # Fetch all teams under the organization and department
-            teams = Team.objects.filter(organization=organization, department=department)
+            teams = Team.objects.filter(organization=organization)
 
             # Iterate over the teams and check if the employee is part of each team
             for team in teams:
                 if team.id in employee_team_ids:
-                    project = self.get_object_or_404(Project, organization=organization, department=department,team = team,id = projectId)
+                    project = self.get_object_or_404(Project, organization=organization,team = team,id = projectId)
                     if not project:
                         return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
                     tasklists = TaskList.objects.filter(project = project)
@@ -205,13 +209,15 @@ class ProjectSingleProject(APIView):
 
         # Serialize and return project data
 class ProjectTeams(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get_object_or_404(self, model, **kwargs):
         try:
             return model.objects.get(**kwargs)
         except model.DoesNotExist:
             return None
 
-    def get(self, request, userId, organizationId, departmentId):
+    def get(self, request, userId, organizationId):
         user = self.get_object_or_404(User, id=userId)
         if not user:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -224,9 +230,7 @@ class ProjectTeams(APIView):
         # if not employee:
         #     return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        department = self.get_object_or_404(Department, organization=organization, id=departmentId)
-        if not department:
-            return Response({'error': 'Department not found'}, status=status.HTTP_404_NOT_FOUND)
+        
 
         # Fetch the employee along with their teams using prefetch_related
         employee = Employee.objects.filter(organization=organization, user=user).prefetch_related('team').first()
@@ -263,9 +267,7 @@ class ProjectTeams(APIView):
         # if not employee:
         #     return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        department = self.get_object_or_404(Department, organization=organization, id=departmentId)
-        if not department:
-            return Response({'error': 'Department not found'}, status=status.HTTP_404_NOT_FOUND)
+        
 
         # Fetch the employee along with their teams using prefetch_related
         employee = Employee.objects.filter(organization=organization, user=user).prefetch_related('team').first()
@@ -273,7 +275,7 @@ class ProjectTeams(APIView):
         if employee:
             # TODO : Employee permission need to check if employee have permission to create or not
             # Fetch all teams under the organization and department
-            team = Team(name = team_name,organization = organization,department = department,created_by = user)
+            team = Team(name = team_name,organization = organization,created_by = user)
             team.save()
 
             # Iterate over the teams and check if the employee is part of each team
