@@ -238,7 +238,7 @@ class ProjectTeams(APIView):
         if employee:
 
             # Fetch all teams under the organization and department
-            teams = Team.objects.filter(organization=organization, department=department)
+            teams = Team.objects.filter(organization=organization)
 
             # Iterate over the teams and check if the employee is part of each team
             team_serializers = TeamSerializer(teams, many = True)
@@ -252,7 +252,7 @@ class ProjectTeams(APIView):
         
 
         # Serialize and return project data
-    def post(self, request, userId, organizationId, departmentId):
+    def post(self, request, userId, organizationId):
         user = self.get_object_or_404(User, id=userId)
         data = request.data
         team_name = data['team_name']
