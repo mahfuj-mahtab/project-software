@@ -1,13 +1,13 @@
 from rest_framework import serializers
 from .models import *
 
-class DepartmentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Department
-        fields = '__all__'
 
+class ProjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Project
+        fields = '__all__'
 class OrganizationSerializer(serializers.ModelSerializer):
-    departments = DepartmentSerializer(many=True, read_only=True)
+    projects = ProjectSerializer(many=True, read_only=True)
 
     class Meta:
         model = Organization
@@ -22,10 +22,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
         model = Employee
         exclude = ('user',)
         depth = 1
-class ProjectSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Project
-        fields = '__all__'
+
 class ProjectTaskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Task

@@ -13,21 +13,21 @@ class Organization(models.Model):
         return self.name
 
 
-class Department(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255)
-    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="departments")
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+# class Department(models.Model):
+#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+#     name = models.CharField(max_length=255)
+#     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="departments")
+#     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     
-    def __str__(self):
-        return self.name
+#     def __str__(self):
+#         return self.name
 
 
 class Team(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="teams")
-    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="teams")
+    # department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="teams")
     created_by = models.ForeignKey(User, on_delete=models.CASCADE,null=True)
     
     def __str__(self):
@@ -36,7 +36,7 @@ class EmployeeRole(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="EmployeeRoleteams")
-    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="EmployeeRoleteams")
+    # department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="EmployeeRoleteams")
 
     def __str__(self):
         return self.name
@@ -68,7 +68,7 @@ class Project(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     deadline = models.DateTimeField()
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="projects")
-    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="department",null=True)
+    # department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="department",null=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_projects")
     team = models.ManyToManyField(Team, related_name="created_team_projects")
 
