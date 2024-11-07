@@ -139,18 +139,22 @@ class ProjectProject(APIView):
         project_name = data['project_name']
         project_description = data['project_description']
         project_deadline = data['project_deadline']
-        project_team_id = data['project_team_id']
-        try:
-            team = Team.objects.get(id = project_team_id)
-        except Team.DoesNotExist:
-            return Response({'error': 'Team not found'}, status=status.HTTP_404_NOT_FOUND)
-            
-    
+        project_teams = data['project_teams']
         if(len(data['project_name']) == 0):
             return Response({'error': 'Project name cannot be empty'},status = status.HTTP_404_NOT_FOUND)
         project = Project(name = data['project_name'],description = project_description,deadline = project_deadline,organization = organization,created_by = user)
         project.save()
-        project.team.set([team])
+        print(project_teams)
+        teams = []
+        for project_team in project_teams:
+
+            try:
+                team = Team.objects.get(id = project_team)
+                teams.append(team)
+            except Team.DoesNotExist:
+                return Response({'error': 'Team not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+        project.team.set(teams)
         project.save()
         return Response({'success' : 'Project Created'},status=status.HTTP_200_OK)
 class ProjectSingleProject(APIView):
