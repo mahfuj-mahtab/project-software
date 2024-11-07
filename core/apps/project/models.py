@@ -92,7 +92,7 @@ class TaskList(models.Model):
     description = models.TextField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="task_lists")
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_by = models.ForeignKey(Employee, on_delete=models.CASCADE)
     start_date = models.DateTimeField(null=True, blank=True)
     due_date = models.DateTimeField(null=True, blank=True)
 
