@@ -41,14 +41,9 @@ class ProjectOrganization(APIView):
             organization.save()
             # department = Department(name = 'Administration',organization = organization,created_by = user)
             # department.save()
-            team = Team(name = 'Administration',organization = organization,created_by = user)
-            team.save()
-            employeerole = EmployeeRole(name = 'Administrator',organization = organization)
-            employeerole.save()
-            employee = Employee(organization = organization,user = user)
-            employee.save()
-            employee.team.set([team])
-            employee.role.set([employeerole])
+           
+            
+            employee = Employee(organization = organization,user = user,role = 'ADMIN',status = 'APPROVED')
             employee.save()
             return Response({'success' : 'Organization Created'},status=status.HTTP_200_OK)
 class ProjectDepartment(APIView):
@@ -139,22 +134,11 @@ class ProjectProject(APIView):
         project_name = data['project_name']
         project_description = data['project_description']
         project_deadline = data['project_deadline']
-        project_teams = data['project_teams']
         if(len(data['project_name']) == 0):
             return Response({'error': 'Project name cannot be empty'},status = status.HTTP_404_NOT_FOUND)
-        project = Project(name = data['project_name'],description = project_description,deadline = project_deadline,organization = organization,created_by = user)
+        project = Project(name = project_name,description = project_description,deadline = project_deadline,organization = organization,created_by = user)
         project.save()
-        print(project_teams)
-        teams = []
-        for project_team in project_teams:
-
-            try:
-                team = Team.objects.get(id = project_team)
-                teams.append(team)
-            except Team.DoesNotExist:
-                return Response({'error': 'Team not found'}, status=status.HTTP_404_NOT_FOUND)
-            
-        project.team.set(teams)
+        project.members.set([employee])
         project.save()
         return Response({'success' : 'Project Created'},status=status.HTTP_200_OK)
 class ProjectSingleProject(APIView):
@@ -182,27 +166,25 @@ class ProjectSingleProject(APIView):
         
 
         # Fetch the employee along with their teams using prefetch_related
-        employee = Employee.objects.filter(organization=organization, user=user).prefetch_related('team').first()
+        employee = Employee.objects.filter(organization=organization, user=user)
 
         if employee:
             # Get all teams that the employee is part of as a list of IDs
-            employee_team_ids = employee.team.values_list('id', flat=True)
 
-            # Fetch all teams under the organization and department
-            teams = Team.objects.filter(organization=organization)
-
-            # Iterate over the teams and check if the employee is part of each team
-            for team in teams:
-                if team.id in employee_team_ids:
-                    project = self.get_object_or_404(Project, organization=organization,team = team,id = projectId)
-                    if not project:
-                        return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+            project = self.get_object_or_404(Project, organization=organization,id = projectId)
+            if not project:
+                return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                if project.members.filter(id=employee[0].id).exists():
                     tasklists = TaskList.objects.filter(project = project)
                     tasklists_serializers = ProjectTaskListSerializer(tasklists,many = True)
                     return Response({'data': tasklists_serializers.data}, status=status.HTTP_200_OK)
-
                 else:
                     return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
+
+
+
+
 
         else:
             return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
@@ -280,7 +262,7 @@ class ProjectSingleProjectTaskAdd(APIView):
         
 
         # Fetch the employee along with their teams using prefetch_related
-        employee = Employee.objects.filter(organization=organization, user=user).prefetch_related('team').first()
+        employee = Employee.objects.filter(organization=organization, user=user)
 
         if employee:
             # Get all teams that the employee is part of as a list of IDs
@@ -335,16 +317,16 @@ class ProjectTeams(APIView):
         
 
         # Fetch the employee along with their teams using prefetch_related
-        employee = Employee.objects.filter(organization=organization, user=user).prefetch_related('team').first()
+        employee = Employee.objects.filter(organization=organization, user=user)
 
         if employee:
 
-            # Fetch all teams under the organization and department
-            teams = Team.objects.filter(organization=organization)
+            # Fetch all employee under the organization and department
+            employees = Employee.objects.filter(organization=organization)
 
             # Iterate over the teams and check if the employee is part of each team
-            team_serializers = TeamSerializer(teams, many = True)
-            return Response({"data" : team_serializers.data},status=status.HTTP_200_OK)
+            employees_serializers = EmployeeSerializer(employees, many = True)
+            return Response({"data" : employees_serializers.data},status=status.HTTP_200_OK)
 
         else:
             return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)

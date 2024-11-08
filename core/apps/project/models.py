@@ -23,42 +23,50 @@ class Organization(models.Model):
 #         return self.name
 
 
-class Team(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255)
-    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="teams")
-    # department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="teams")
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE,null=True)
+# class Team(models.Model):
+#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+#     name = models.CharField(max_length=255)
+#     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="teams")
+#     # department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="teams")
+#     created_by = models.ForeignKey(User, on_delete=models.CASCADE,null=True)
     
-    def __str__(self):
-        return self.name
-class EmployeeRole(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255)
-    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="EmployeeRoleteams")
-    # department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="EmployeeRoleteams")
+#     def __str__(self):
+#         return self.name
+# class EmployeeRole(models.Model):
+#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+#     name = models.CharField(max_length=255)
+#     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="EmployeeRoleteams")
+#     # department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="EmployeeRoleteams")
 
-    def __str__(self):
-        return self.name
+#     def __str__(self):
+#         return self.name
 
 
 class Employee(models.Model):
+    ROLE = [
+        ('ADMIN', 'ADMIN'),
+        ('EDITOR', 'EDITOR'),
+        ('COMMENTER', 'COMMENTER'),
+        ('VIEWER', 'VIEWER'),
+
+    ]
+    STATUS = [
+        ('INVITED', 'INVITED'),
+        ('APPROVED', 'APPROVED'),
+        ('PENDING', 'PENDING'),
+        ('BANNED', 'BANNED'),
+        ('DELETED', 'DELETED'),
+
+    ]
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="employee_profile")
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="employees")
-    team = models.ManyToManyField(Team, null=True, blank=True)
-    role = models.ManyToManyField(EmployeeRole)
+    role = models.TextField(choices=ROLE,default='VIEWER')
+    status = models.TextField(choices=STATUS,default = 'INVITED')
 
     def __str__(self):
         return f"{self.user.first_name} - {self.organization.name}"
 
-
-class Permission(models.Model):
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="permissions")
-    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
-    can_edit = models.BooleanField(default=False)
-    can_delete = models.BooleanField(default=False)
-    can_assign = models.BooleanField(default=False)
 
 
 class Project(models.Model):
@@ -70,7 +78,7 @@ class Project(models.Model):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="projects")
     # department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name="department",null=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_projects")
-    team = models.ManyToManyField(Team, related_name="created_team_projects")
+    members = models.ManyToManyField(Employee,related_name="project_members")
 
 
 class TaskList(models.Model):

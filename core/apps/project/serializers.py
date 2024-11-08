@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from .models import *
-
-
+from django.contrib.auth.models import User
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
@@ -12,15 +11,20 @@ class OrganizationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Organization
         fields = '__all__'
-class TeamSerializer(serializers.ModelSerializer):
+# class TeamSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Team
+#         fields = '__all__'
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Team
-        fields = '__all__'
+        model = User
+        exclude = ('password',)
+        depth = 1
 class EmployeeSerializer(serializers.ModelSerializer):
-    teams = TeamSerializer(many = True,source = 'team')
+    user = UserSerializer()
     class Meta:
         model = Employee
-        exclude = ('user',)
+        exclude = ()
         depth = 1
 
 class ProjectTaskSerializer(serializers.ModelSerializer):
