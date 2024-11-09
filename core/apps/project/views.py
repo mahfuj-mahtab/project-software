@@ -281,12 +281,19 @@ class ProjectSingleProjectTaskAdd(APIView):
                     start_date = request.data['start_date']
                     due_date = request.data['due_date']
                     members = request.data['members']
-                   
+                    
                     task = Task(title = name, description = description,priority = priority,status = task_status,start_date = start_date, due_date = due_date,task_list = task_list)
                     task.save()
-                    for member in members:
-                        em = Employee.objects.get(id = member)
+                    if isinstance(members,str):
+                        em = Employee.objects.get(id = members)
                         task.assigned_to.add(em)
+
+                    elif(isinstance(members,list)):
+                        for member in members:
+                            em = Employee.objects.get(id = member)
+                            task.assigned_to.add(em)
+
+                    
                     task.save()
                     return Response({'data': 'Task List Created'}, status=status.HTTP_200_OK)
                     
