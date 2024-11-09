@@ -28,11 +28,14 @@ class EmployeeSerializer(serializers.ModelSerializer):
         depth = 1
 
 class ProjectTaskSerializer(serializers.ModelSerializer):
+    assigned_to = EmployeeSerializer(many=True)
     class Meta:
         model = Task
         fields = '__all__'
+        depth = 1
 class ProjectTaskListSerializer(serializers.ModelSerializer):
     tasks = ProjectTaskSerializer(many = True)
     class Meta:
         model = TaskList
         fields = '__all__'
+        depth = 1

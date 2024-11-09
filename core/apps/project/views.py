@@ -199,55 +199,7 @@ class ProjectSingleProjectTaskListAdd(APIView):
 
     def post(self, request, userId, organizationId,projectId):
         user = self.get_object_or_404(User, id=userId)
-        if not user:
-            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        organization = self.get_object_or_404(Organization, id=organizationId)
-        if not organization:
-            return Response({'error': 'Organization not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        # employee = self.get_object_or_404(Employee, user=user, organization=organization)
-        # if not employee:
-        #     return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        
-
-        # Fetch the employee along with their teams using prefetch_related
-        employee = Employee.objects.filter(organization=organization, user=user).prefetch_related('team').first()
-
-        if employee:
-            # Get all teams that the employee is part of as a list of IDs
-            employee_team_ids = employee.team.values_list('id', flat=True)
-
-            # Fetch all teams under the organization and department
-            teams = Team.objects.filter(organization=organization)
-
-            # Iterate over the teams and check if the employee is part of each team
-            for team in teams:
-                if team.id in employee_team_ids:
-                    project = self.get_object_or_404(Project, organization=organization,team = team,id = projectId)
-                    if not project:
-                        return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
-                    tasklists = TaskList.objects.filter(project = project)
-                    tasklists_serializers = ProjectTaskListSerializer(tasklists,many = True)
-                    return Response({'data': tasklists_serializers.data}, status=status.HTTP_200_OK)
-
-                else:
-                    return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
-
-        else:
-            return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
-class ProjectSingleProjectTaskAdd(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get_object_or_404(self, model, **kwargs):
-        try:
-            return model.objects.get(**kwargs)
-        except model.DoesNotExist:
-            return None
-
-    def post(self, request, userId, organizationId,projectId):
-        user = self.get_object_or_404(User, id=userId)
+        data = request.data
         if not user:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -266,29 +218,82 @@ class ProjectSingleProjectTaskAdd(APIView):
 
         if employee:
             # Get all teams that the employee is part of as a list of IDs
-            employee_team_ids = employee.team.values_list('id', flat=True)
-
-            # Fetch all teams under the organization and department
-            teams = Team.objects.filter(organization=organization)
-
-            # Iterate over the teams and check if the employee is part of each team
-            for team in teams:
-                if team.id in employee_team_ids:
-                    project = self.get_object_or_404(Project, organization=organization,team = team,id = projectId)
-                    if not project:
-                        return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
-                    tasklists = TaskList.objects.filter(project = project)
-                    tasklists_serializers = ProjectTaskListSerializer(tasklists,many = True)
-                    return Response({'data': tasklists_serializers.data}, status=status.HTTP_200_OK)
-
+            project = self.get_object_or_404(Project, organization=organization,id = projectId)
+            if not project:
+                return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                if project.members.filter(id=employee[0].id).exists() and (employee[0].role == 'ADMIN' or employee[0].role == 'EDITOR'):
+                    name = request.data['name']
+                    description = request.data['description']
+                    task_status = request.data['status']
+                    start_date = request.data['start_date']
+                    due_date = request.data['due_date']
+                    task_list = TaskList(name = name, description = description,status = task_status,start_date = start_date, due_date = due_date,project = project,created_by = employee[0])
+                    task_list.save()
+                    return Response({'data': 'Task List Created'}, status=status.HTTP_200_OK)
+                    
                 else:
                     return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
-
         else:
-            return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
+class ProjectSingleProjectTaskAdd(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def get_object_or_404(self, model, **kwargs):
+        try:
+            return model.objects.get(**kwargs)
+        except model.DoesNotExist:
+            return None
 
-       
+    def post(self, request, userId, organizationId,projectId,tl):
+        user = self.get_object_or_404(User, id=userId)
+        data = request.data
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        organization = self.get_object_or_404(Organization, id=organizationId)
+        if not organization:
+            return Response({'error': 'Organization not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # employee = self.get_object_or_404(Employee, user=user, organization=organization)
+        # if not employee:
+        #     return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        
+
+        # Fetch the employee along with their teams using prefetch_related
+        employee = Employee.objects.filter(organization=organization, user=user)
+
+        if employee:
+            # Get all teams that the employee is part of as a list of IDs
+            project = self.get_object_or_404(Project, organization=organization,id = projectId)
+            if not project:
+                return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                if project.members.filter(id=employee[0].id).exists() and (employee[0].role == 'ADMIN' or employee[0].role == 'EDITOR'):
+                    task_list = self.get_object_or_404(TaskList,id = tl)
+                    if not task_list:
+                        return Response({'error': 'TaskList not found'}, status=status.HTTP_404_NOT_FOUND)
+                    name = request.data['name']
+                    description = request.data['description']
+                    priority = request.data['priority']
+                    task_status = request.data['status']
+                    start_date = request.data['start_date']
+                    due_date = request.data['due_date']
+                    members = request.data['members']
+                   
+                    task = Task(title = name, description = description,priority = priority,status = task_status,start_date = start_date, due_date = due_date,task_list = task_list)
+                    task.save()
+                    for member in members:
+                        em = Employee.objects.get(id = member)
+                        task.assigned_to.add(em)
+                    task.save()
+                    return Response({'data': 'Task List Created'}, status=status.HTTP_200_OK)
+                    
+                else:
+                    return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
         
 
         # Serialize and return project data
@@ -413,6 +418,7 @@ class ProjectSingleProjectMember(APIView):
                         member = {
                             "name" : mem.user.first_name,
                             "email" : mem.user.email,
+                            "id" : mem.id,
                             # TODO : NEED TO ADD IMAGE 
                         }
                         members.append(member)
