@@ -374,3 +374,114 @@ class ProjectTeams(APIView):
         
 
         # Serialize and return project data
+class ProjectSingleProjectMember(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object_or_404(self, model, **kwargs):
+        try:
+            return model.objects.get(**kwargs)
+        except model.DoesNotExist:
+            return None
+
+    def get(self, request, userId, organizationId,projectId):
+        user = self.get_object_or_404(User, id=userId)
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        organization = self.get_object_or_404(Organization, id=organizationId)
+        if not organization:
+            return Response({'error': 'Organization not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # employee = self.get_object_or_404(Employee, user=user, organization=organization)
+        # if not employee:
+        #     return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        
+
+        # Fetch the employee along with their teams using prefetch_related
+        employee = Employee.objects.filter(organization=organization, user=user)
+
+        if employee:
+            # Get all teams that the employee is part of as a list of IDs
+            members = []
+            project = self.get_object_or_404(Project, organization=organization,id = projectId)
+            if not project:
+                return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                if project.members.filter(id=employee[0].id).exists():
+                    for mem in project.members.filter():
+                        member = {
+                            "name" : mem.user.first_name,
+                            "email" : mem.user.email,
+                            # TODO : NEED TO ADD IMAGE 
+                        }
+                        members.append(member)
+                    
+                    return Response({'data': members}, status=status.HTTP_200_OK)
+                else:
+                    return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
+
+
+        # Query optimization with select_related (if applicable)
+        
+
+        # Serialize and return project data
+    def post(self, request, userId, organizationId,projectId):
+        user = self.get_object_or_404(User, id=userId)
+        data = request.data
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        organization = self.get_object_or_404(Organization, id=organizationId)
+        if not organization:
+            return Response({'error': 'Organization not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # employee = self.get_object_or_404(Employee, user=user, organization=organization)
+        # if not employee:
+        #     return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        
+
+        # Fetch the employee along with their teams using prefetch_related
+        employee = Employee.objects.filter(organization=organization, user=user)
+
+        if employee:
+            # Get all teams that the employee is part of as a list of IDs
+            members = []
+            project = self.get_object_or_404(Project, organization=organization,id = projectId)
+            if not project:
+                return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                if project.members.filter(id=employee[0].id).exists() and (employee[0].role == 'ADMIN' or employee[0].role == 'EDITOR'):
+                    email = request.data['email']
+                    role = request.data['role']
+                    usr = User.objects.filter(email = email)
+                    if(len(usr) == 1):
+                        employ = Employee.objects.filter(organization=organization, user=usr[0]).first()
+                        if(employ):
+                            project.members.add(employ) 
+                            project.save()
+                            return Response({'data': 'Member Assigned'}, status=status.HTTP_200_OK)
+
+
+                        else:
+                            employee_create = Employee(user = usr[0],organization = organization, role = role, status = 'INVITED')
+                            employee_create.save()
+                            project.members.add(employee_create)
+                            project.save()
+                            return Response({'data': 'Member Assigned'}, status=status.HTTP_200_OK)
+                        
+                    else:
+                        return Response({'error': 'Something Went Wrong..'}, status=status.HTTP_404_NOT_FOUND)
+
+                    
+                else:
+                    return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
+
+
+        # Query optimization with select_related (if applicable)
+        
+
+        # Serialize and return project data

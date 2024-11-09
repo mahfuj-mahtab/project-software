@@ -7,6 +7,7 @@ urlpatterns = [
     # path("organization/fetch/department/<int:userId>/<str:organizationId>/", ProjectDepartment.as_view(),name = 'project department'),
     path("organization/fetch/project/<int:userId>/<str:organizationId>/", ProjectProject.as_view(),name = 'project project fetch'),
     path("organization/fetch/single/project/<int:userId>/<str:organizationId>/<str:projectId>/", ProjectSingleProject.as_view(),name = 'project single project fetch'),
+    path("organization/fetch/members/single/project/<int:userId>/<str:organizationId>/<str:projectId>/", ProjectSingleProjectMember.as_view(),name = 'project single project member  fetch'),
     path("organization/add/single/project/tasklist/<int:userId>/<str:organizationId>/<str:projectId>/", ProjectSingleProjectTaskListAdd.as_view(),name = 'ProjectSingleProjectTaskListAdd '),
     path("organization/add/single/project/task/<int:userId>/<str:organizationId>/<str:projectId>/", ProjectSingleProjectTaskAdd.as_view(),name = 'ProjectSingleProjectTaskAdd '),
     path("organization/fetch/project/teams/<int:userId>/<str:organizationId>/", ProjectTeams.as_view(),name = 'project ProjectTeams fetch'),
