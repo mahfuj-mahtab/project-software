@@ -5,6 +5,9 @@ from django.contrib.auth.models import User
 from .serializers import UserSerializer, RegisterSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import CustomTokenObtainPairSerializer
 # Register API
 class RegisterAPI(generics.GenericAPIView):
     serializer_class = RegisterSerializer
@@ -19,3 +22,5 @@ class RegisterAPI(generics.GenericAPIView):
             "refresh": str(refresh),
             "access": str(refresh.access_token),
         })
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer

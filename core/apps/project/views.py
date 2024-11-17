@@ -302,6 +302,118 @@ class ProjectSingleProjectTaskAdd(APIView):
         else:
             return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
         
+class ProjectSingleProjectTaskDetails(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object_or_404(self, model, **kwargs):
+        try:
+            return model.objects.get(**kwargs)
+        except model.DoesNotExist:
+            return None
+
+    def get(self, request, userId, organizationId,projectId,tl,task_id):
+        user = self.get_object_or_404(User, id=userId)
+        data = request.data
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        organization = self.get_object_or_404(Organization, id=organizationId)
+        if not organization:
+            return Response({'error': 'Organization not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # employee = self.get_object_or_404(Employee, user=user, organization=organization)
+        # if not employee:
+        #     return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        
+
+        # Fetch the employee along with their teams using prefetch_related
+        employee = Employee.objects.filter(organization=organization, user=user)
+
+        if employee:
+            # Get all teams that the employee is part of as a list of IDs
+            project = self.get_object_or_404(Project, organization=organization,id = projectId)
+            if not project:
+                return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                if project.members.filter(id=employee[0].id).exists() and (employee[0].role == 'ADMIN' or employee[0].role == 'EDITOR'):
+                    task_list = self.get_object_or_404(TaskList,id = tl)
+                    if not task_list:
+                        return Response({'error': 'TaskList not found'}, status=status.HTTP_404_NOT_FOUND)
+                    task_details = Task.objects.filter(id = task_id, task_list = task_list)
+                    return Response({'data': ProjectTaskSerializer(task_details[0]).data}, status=status.HTTP_200_OK)
+                    
+                else:
+                    return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
+    def put(self, request, userId, organizationId,projectId,tl,task_id):
+        user = self.get_object_or_404(User, id=userId)
+        data = request.data
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        organization = self.get_object_or_404(Organization, id=organizationId)
+        if not organization:
+            return Response({'error': 'Organization not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # employee = self.get_object_or_404(Employee, user=user, organization=organization)
+        # if not employee:
+        #     return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        
+
+        # Fetch the employee along with their teams using prefetch_related
+        employee = Employee.objects.filter(organization=organization, user=user)
+
+        if employee:
+            # Get all teams that the employee is part of as a list of IDs
+            project = self.get_object_or_404(Project, organization=organization,id = projectId)
+            if not project:
+                return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                if project.members.filter(id=employee[0].id).exists() and (employee[0].role == 'ADMIN' or employee[0].role == 'EDITOR'):
+                    task_list = self.get_object_or_404(TaskList,id = tl)
+                    if not task_list:
+                        return Response({'error': 'TaskList not found'}, status=status.HTTP_404_NOT_FOUND)
+                    task = self.get_object_or_404(Task, id=task_id)
+                    if not task:
+                        return Response({'error': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
+
+                    data = request.data
+                    try:
+                        # Update task details if provided
+                        task.title = data.get("title", task.title)
+                        task.description = data.get("description", task.description)
+                        task.priority = data.get("priority", task.priority)
+                        task.status = data.get("status", task.status)
+                        task.start_date = data.get("start_date", task.start_date)
+                        task.due_date = data.get("due_date", task.due_date)
+                        task.save()
+
+                        # Update task's assigned employees
+                        if "members" in data:
+                            task.assigned_to.clear()  # Clear existing assignments
+                            members = data["members"]
+
+                            if isinstance(members, str):
+                                em = Employee.objects.get(id=members)
+                                task.assigned_to.add(em)
+
+                            elif isinstance(members, list):
+                                for member in members:
+                                    em = Employee.objects.get(id=member)
+                                    task.assigned_to.add(em)
+                        return Response({'data': 'Task updated successfully'}, status=status.HTTP_200_OK)
+
+                    except Exception as e:
+                        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+                else:
+                    return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
+        
 
         # Serialize and return project data
 class ProjectTeams(APIView):
