@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from .models import *
 from .serializers import *
 from rest_framework.permissions import IsAuthenticated
-
+from django.utils.timezone import now
 # Create your views here.
 class ProjectOrganization(APIView):
     permission_classes = [IsAuthenticated]
@@ -46,6 +46,32 @@ class ProjectOrganization(APIView):
             employee = Employee(organization = organization,user = user,role = 'ADMIN',status = 'APPROVED')
             employee.save()
             return Response({'success' : 'Organization Created'},status=status.HTTP_200_OK)
+class FetchAllDueAndUpcomingTask(APIView):
+    def get(self, request, *args, **kwargs):
+        # Current timestamp
+        current_time = now()
+
+        # Get due tasks (not completed and due date in the past)
+        due_tasks = Task.objects.filter(
+            status__in=['Active', 'InProgress','OnTrack','Delayed','Testing','OnHold','Approved','Canceled','Planning','Pending','active'],  # Exclude 'Completed'
+            due_date__lt=current_time
+        ).order_by('due_date')
+
+        # Get upcoming tasks (not completed and due date in the future)
+        upcoming_tasks = Task.objects.filter(
+            status__in=['Active', 'InProgress','OnTrack','Delayed','Testing','OnHold','Approved','Canceled','Planning','Pending','active'],  # Exclude 'Completed'
+            due_date__gte=current_time
+        ).order_by('due_date')
+
+        # Serialize data
+        due_tasks_data = ProjectTaskSerializer(due_tasks, many=True).data
+        upcoming_tasks_data = ProjectTaskSerializer(upcoming_tasks, many=True).data
+
+        tasks = {
+            "due_tasks": due_tasks_data,
+            "upcoming_tasks": upcoming_tasks_data,
+        }
+        return Response({'data' : tasks},status=status.HTTP_200_OK)
 class ProjectDepartment(APIView):
     permission_classes = [IsAuthenticated]
 

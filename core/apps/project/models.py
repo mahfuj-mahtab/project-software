@@ -113,6 +113,7 @@ class Task(models.Model):
     ]
     STATUS_CHOICES = [
         ('Active', 'Active'),
+        ('Pending', 'Pending'),
         ('InProgress', 'InProgress'),
         ('OnTrack', 'OnTrack'),
         ('Delayed', 'Delayed'),

@@ -28,10 +28,12 @@ SECRET_KEY = "django-insecure--^15xqzzrh4-)*ky5e4$dt*xzhg=euiyt742l&lqy@8y5wznx%
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['app.mahfujmohot.com','project.mahfujmohot.com']
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173"
+    "http://localhost:5173",
+    'https://app.mahfujmohot.com',
+    'https://project.mahfujmohot.com'
 ]
 # Application definition
 
@@ -93,10 +95,9 @@ WSGI_APPLICATION = "core.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv("db_name"),
-        'USER': os.getenv("db_user"),
-        'PASSWORD': os.getenv("db_password"),
-
+        'NAME': os.getenv("DB_NAME"),
+        'USER': os.getenv("DB_USER"),
+        'PASSWORD': os.getenv("DB_PASSWORD"),
         'HOST': 'localhost',
         'PORT': '3306',
  

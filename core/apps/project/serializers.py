@@ -5,12 +5,14 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = '__all__'
+        depth = 1
 class OrganizationSerializer(serializers.ModelSerializer):
     projects = ProjectSerializer(many=True, read_only=True)
 
     class Meta:
         model = Organization
         fields = '__all__'
+        depth = 1
 # class TeamSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Team
@@ -35,6 +37,7 @@ class ProjectTaskSerializer(serializers.ModelSerializer):
         depth = 1
 class ProjectTaskListSerializer(serializers.ModelSerializer):
     tasks = ProjectTaskSerializer(many = True)
+
     class Meta:
         model = TaskList
         fields = '__all__'
