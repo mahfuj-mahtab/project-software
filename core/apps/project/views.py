@@ -47,25 +47,71 @@ class ProjectOrganization(APIView):
             employee.save()
             return Response({'success' : 'Organization Created'},status=status.HTTP_200_OK)
 class FetchAllDueAndUpcomingTask(APIView):
-    def get(self, request, *args, **kwargs):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, u_id):
         # Current timestamp
         current_time = now()
+        try:
+            user = User.objects.get(id=u_id)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Get due tasks (not completed and due date in the past)
+        # Get all employee profiles linked to the user
+        employees = Employee.objects.filter(user=user)
+        if not employees.exists():
+            return Response({'error': 'You are not assigned to any organization'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get due tasks (not completed and due date in the past) for all linked employees
         due_tasks = Task.objects.filter(
-            status__in=['Active', 'InProgress','OnTrack','Delayed','Testing','OnHold','Approved','Canceled','Planning','Pending','active'],  # Exclude 'Completed'
-            due_date__lt=current_time
-        ).order_by('due_date')
+            status__in=['Active', 'InProgress', 'OnTrack', 'Delayed', 'Testing', 
+                        'OnHold', 'Approved', 'Canceled', 'Planning', 'Pending', 'active'],  # Exclude 'Completed'
+            due_date__lt=current_time,
+            assigned_to__in=employees  # Filter by all employees
+        ).distinct().order_by('due_date')
 
         # Get upcoming tasks (not completed and due date in the future)
         upcoming_tasks = Task.objects.filter(
             status__in=['Active', 'InProgress','OnTrack','Delayed','Testing','OnHold','Approved','Canceled','Planning','Pending','active'],  # Exclude 'Completed'
-            due_date__gte=current_time
-        ).order_by('due_date')
-
+            due_date__gte=current_time,
+            assigned_to__in=employees  # Filter by all employees
+        ).distinct().order_by('due_date')
+        due_tasks_data = []
+        upcoming_tasks_data = []
+        for task in due_tasks:
+            tsk = {
+                "id": str(task.id),
+                "title": task.title,
+                "description": task.description,
+                "priority": task.priority,
+                "status": task.status,
+                "created_at": task.created_at,
+                "start_date": task.start_date,
+                "due_date": task.due_date,
+                "project": task.task_list.project.name,  # Assuming TaskList has an `organization` field
+                "organization": task.task_list.project.organization.name,
+                'org_id' : task.task_list.project.organization.id,
+                "project_id" : task.task_list.project.id,
+            }
+            due_tasks_data.append(tsk)
+        for task in upcoming_tasks:
+            tsk = {
+                "id": str(task.id),
+                "title": task.title,
+                "description": task.description,
+                "priority": task.priority,
+                "status": task.status,
+                "created_at": task.created_at,
+                "start_date": task.start_date,
+                "due_date": task.due_date,
+                "project": task.task_list.project.name,  
+                "organization": task.task_list.project.organization.name,
+                'org_id' : task.task_list.project.organization.id,
+                "project_id" : task.task_list.project.id,
+            }
+            upcoming_tasks_data.append(tsk)
         # Serialize data
-        due_tasks_data = ProjectTaskSerializer(due_tasks, many=True).data
-        upcoming_tasks_data = ProjectTaskSerializer(upcoming_tasks, many=True).data
+        # due_tasks_data = ProjectTaskSerializer(due_tasks, many=True).data
+        # upcoming_tasks_data = ProjectTaskSerializer(upcoming_tasks, many=True).data
 
         tasks = {
             "due_tasks": due_tasks_data,
