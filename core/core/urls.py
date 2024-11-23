@@ -27,5 +27,6 @@ urlpatterns = [
     path("module/project/", include('apps.project.urls')),
     path("module/project/", include('apps.project.urls')),
     path("module/project/users/", include('apps.user.urls')),
+    path("module/routine/", include('apps.routine.urls')),
 
 ]
