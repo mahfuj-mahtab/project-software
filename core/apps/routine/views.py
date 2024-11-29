@@ -52,9 +52,34 @@ class RoutineView(APIView):
             routine_category = RoutineCategory.objects.get(id=routine_category_id,user = user)
         except:
             return Response({"message":"Routine Category Does not exist"},status=status.HTTP_404_NOT_FOUND)
-        routine = Routine.objects.filter(routine_category=routine_category,user=user)
-        serializer = RoutineSerializer(routine,many=True)
-        return Response({'data' : serializer.data},status=status.HTTP_200_OK)
+        data = {
+            
+        }
+        saturday_routine = Routine.objects.filter(routine_category=routine_category,user=user,day = 'SATURDAY').order_by('start')
+        sunday_routine = Routine.objects.filter(routine_category=routine_category,user=user,day = 'SUNDAY').order_by('start')
+        monday_routine = Routine.objects.filter(routine_category=routine_category,user=user,day = 'MONDAY').order_by('start')
+        tuesday_routine = Routine.objects.filter(routine_category=routine_category,user=user,day = 'TUESDAY').order_by('start')
+        wednesday_routine = Routine.objects.filter(routine_category=routine_category,user=user,day = 'WEDNESDAY').order_by('start')
+        thursday_routine = Routine.objects.filter(routine_category=routine_category,user=user,day = 'THURSDAY').order_by('start')
+        friday_routine = Routine.objects.filter(routine_category=routine_category,user=user,day = 'FRIDAY').order_by('start')
+        data['saturday'] = RoutineSerializer(saturday_routine,many = True).data
+        data['sunday'] = RoutineSerializer(sunday_routine,many = True).data
+        data['monday'] = RoutineSerializer(monday_routine,many = True).data
+        data['tuesday'] = RoutineSerializer(tuesday_routine,many = True).data
+        data['wednesday'] = RoutineSerializer(wednesday_routine,many = True).data
+        data['thursday'] = RoutineSerializer(thursday_routine,many = True).data
+        data['friday'] = RoutineSerializer(friday_routine,many = True).data
+
+
+
+
+
+
+
+
+
+        # serializer = RoutineSerializer(routine,many=True)
+        return Response({'data' : data},status=status.HTTP_200_OK)
     def post(self,request,user_id,routine_category_id):
         try:
             user = User.objects.get(id=user_id)
