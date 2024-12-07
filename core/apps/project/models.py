@@ -83,18 +83,59 @@ class Project(models.Model):
 
 class TaskList(models.Model):
     STATUS_CHOICES = [
-        ('active', 'active'),
-        ('InProgress', 'InProgress'),
-        ('OnTrack', 'OnTrack'),
-        ('Delayed', 'Delayed'),
-        ('Testing', 'Testing'),
-        ('OnHold', 'OnHold'),
-        ('Approved', 'Approved'),
-        ('Canceled', 'Canceled'),
-        ('Planning', 'Planning'),
-        ('Completed', 'Completed'),
-        ('Closed', 'Closed'),
-    ]
+    # General Project Statuses
+    ('Active', 'Active'),
+    ('InProgress', 'In Progress'),
+    ('OnTrack', 'On Track'),
+    ('Delayed', 'Delayed'),
+    ('Testing', 'Testing'),
+    ('OnHold', 'On Hold'),
+    ('Approved', 'Approved'),
+    ('Canceled', 'Canceled'),
+    ('Planning', 'Planning'),
+    ('Completed', 'Completed'),
+    ('Closed', 'Closed'),
+    
+    # Content Creation Specific
+    ('Draft', 'Draft'),
+    ('Ideation', 'Ideation'),
+    ('Editing', 'Editing'),
+    ('Publishing', 'Publishing'),
+    ('Published', 'Published'),
+    ('Scheduled', 'Scheduled'),
+    ('Archived', 'Archived'),
+    ('Reviewing', 'Reviewing'),
+    
+    # Marketing & Campaigns
+    ('Designing', 'Designing'),
+    ('Executing', 'Executing'),
+    ('Analyzing', 'Analyzing'),
+    ('Optimization', 'Optimization'),
+    ('Launch', 'Launch'),
+    ('Feedback', 'Feedback'),
+    
+    # Software Development
+    ('Development', 'Development'),
+    ('Deployment', 'Deployment'),
+    ('BugFixing', 'Bug Fixing'),
+    ('CodeReview', 'Code Review'),
+    ('Maintenance', 'Maintenance'),
+    ('Rollback', 'Rollback'),
+    
+    # Team Collaboration
+    ('Brainstorming', 'Brainstorming'),
+    ('AwaitingFeedback', 'Awaiting Feedback'),
+    ('Revising', 'Revising'),
+    ('ApprovedByTeam', 'Approved by Team'),
+    ('FinalReview', 'Final Review'),
+    
+    # Others
+    ('Rescheduled', 'Rescheduled'),
+    ('UnderDiscussion', 'Under Discussion'),
+    ('Paused', 'Paused'),
+    ('Abandoned', 'Abandoned'),
+]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255)
     description = models.TextField()
