@@ -284,11 +284,77 @@ class ProjectSingleProject(APIView):
                     return Response({'data': tasklists_serializers.data}, status=status.HTTP_200_OK)
                 else:
                     return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+    def patch(self, request, userId, organizationId,projectId):
+        user = self.get_object_or_404(User, id=userId)
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
+        organization = self.get_object_or_404(Organization, id=organizationId)
+        if not organization:
+            return Response({'error': 'Organization not found'}, status=status.HTTP_404_NOT_FOUND)
 
+        # employee = self.get_object_or_404(Employee, user=user, organization=organization)
+        # if not employee:
+        #     return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
 
+        
 
+        # Fetch the employee along with their teams using prefetch_related
+        employee = Employee.objects.filter(organization=organization, user=user)
 
+        if employee:
+            # Get all teams that the employee is part of as a list of IDs
+
+            project = self.get_object_or_404(Project, organization=organization,id = projectId)
+            if not project:
+                return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                if project.members.filter(id=employee[0].id).exists():
+                    data = request.data
+                    if(len(data['project_name']) == 0 or len(data['project_description']) == 0 or len(data['project_deadline']) == 0):
+                        return Response({'error': 'Something Went Wrong'}, status=400)
+                    project.name = data['project_name']
+                    project.description = data['project_description']  
+                    project.deadline = data['project_deadline']  
+                    project.save()
+                    return Response({'success': 'Project successfully Updated'}, status=status.HTTP_200_OK)
+                else:
+                    return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+    def delete(self, request, userId, organizationId,projectId):
+        user = self.get_object_or_404(User, id=userId)
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        organization = self.get_object_or_404(Organization, id=organizationId)
+        if not organization:
+            return Response({'error': 'Organization not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # employee = self.get_object_or_404(Employee, user=user, organization=organization)
+        # if not employee:
+        #     return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        
+
+        # Fetch the employee along with their teams using prefetch_related
+        employee = Employee.objects.filter(organization=organization, user=user)
+
+        if employee:
+            # Get all teams that the employee is part of as a list of IDs
+
+            project = self.get_object_or_404(Project, organization=organization,id = projectId)
+            if not project:
+                return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                if project.members.filter(id=employee[0].id).exists():
+                    data = request.data
+                    project.delete()
+                    return Response({'success': 'Project successfully Deleted'}, status=status.HTTP_200_OK)
+                else:
+                    return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
         else:
             return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
 class ProjectSingleProjectTaskListAdd(APIView):
