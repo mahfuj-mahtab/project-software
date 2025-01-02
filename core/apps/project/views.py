@@ -405,6 +405,83 @@ class ProjectSingleProjectTaskListAdd(APIView):
                     return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
         else:
             return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
+    def patch(self, request, userId, organizationId,projectId):
+        user = self.get_object_or_404(User, id=userId)
+        data = request.data
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        organization = self.get_object_or_404(Organization, id=organizationId)
+        if not organization:
+            return Response({'error': 'Organization not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # employee = self.get_object_or_404(Employee, user=user, organization=organization)
+        # if not employee:
+        #     return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        
+
+        # Fetch the employee along with their teams using prefetch_related
+        employee = Employee.objects.filter(organization=organization, user=user)
+
+        if employee:
+            # Get all teams that the employee is part of as a list of IDs
+            project = self.get_object_or_404(Project, organization=organization,id = projectId)
+            if not project:
+                return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                if project.members.filter(id=employee[0].id).exists() and (employee[0].role == 'ADMIN' or employee[0].role == 'EDITOR'):
+                    task_list = self.get_object_or_404(TaskList,id = request.data['task_list_id'])
+                    if not task_list:
+                        return Response({'error': 'Task List not found'}, status=status.HTTP_404_NOT_FOUND)
+                    task_list.name = request.data['name']
+                    task_list.description = request.data['description']
+                    task_list.task_status = request.data['status']
+                    task_list.start_date = request.data['start_date']
+                    task_list.due_date = request.data['due_date']
+                    task_list.save()
+                    return Response({'data': 'Task List Updated'}, status=status.HTTP_200_OK)
+                    
+                else:
+                    return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
+    def delete(self, request, userId, organizationId,projectId):
+        user = self.get_object_or_404(User, id=userId)
+        data = request.data
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        organization = self.get_object_or_404(Organization, id=organizationId)
+        if not organization:
+            return Response({'error': 'Organization not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # employee = self.get_object_or_404(Employee, user=user, organization=organization)
+        # if not employee:
+        #     return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        
+
+        # Fetch the employee along with their teams using prefetch_related
+        employee = Employee.objects.filter(organization=organization, user=user)
+
+        if employee:
+            # Get all teams that the employee is part of as a list of IDs
+            project = self.get_object_or_404(Project, organization=organization,id = projectId)
+            if not project:
+                return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                if project.members.filter(id=employee[0].id).exists() and (employee[0].role == 'ADMIN' or employee[0].role == 'EDITOR'):
+                    task_list = self.get_object_or_404(TaskList,id = request.data['task_list_id'])
+                    if not task_list:
+                        return Response({'error': 'Task List not found'}, status=status.HTTP_404_NOT_FOUND)
+                    task_list.delete()
+                    return Response({'data': 'Task List Deleted'}, status=status.HTTP_200_OK)
+                    
+                else:
+                    return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
 class ProjectSingleProjectTaskAdd(APIView):
     permission_classes = [IsAuthenticated]
 
