@@ -659,6 +659,45 @@ class ProjectSingleProjectTaskDetails(APIView):
                     return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
         else:
             return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
+    def delete(self, request, userId, organizationId,projectId,tl,task_id):
+        user = self.get_object_or_404(User, id=userId)
+        data = request.data
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        organization = self.get_object_or_404(Organization, id=organizationId)
+        if not organization:
+            return Response({'error': 'Organization not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # employee = self.get_object_or_404(Employee, user=user, organization=organization)
+        # if not employee:
+        #     return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        
+
+        # Fetch the employee along with their teams using prefetch_related
+        employee = Employee.objects.filter(organization=organization, user=user)
+
+        if employee:
+            # Get all teams that the employee is part of as a list of IDs
+            project = self.get_object_or_404(Project, organization=organization,id = projectId)
+            if not project:
+                return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                if project.members.filter(id=employee[0].id).exists() and (employee[0].role == 'ADMIN' or employee[0].role == 'EDITOR'):
+                    task_list = self.get_object_or_404(TaskList,id = tl)
+                    if not task_list:
+                        return Response({'error': 'TaskList not found'}, status=status.HTTP_404_NOT_FOUND)
+                    task = self.get_object_or_404(Task, id=task_id)
+                    if not task:
+                        return Response({'error': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
+                    task.delete()
+                    return Response({'data': 'Task Deleted successfully'}, status=status.HTTP_200_OK)
+
+                else:
+                    return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
         
 
         # Serialize and return project data
