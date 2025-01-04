@@ -819,10 +819,12 @@ class ProjectSingleProjectMember(APIView):
             else:
                 if project.members.filter(id=employee[0].id).exists():
                     for mem in project.members.filter():
+                        
                         member = {
                             "name" : mem.user.first_name,
                             "email" : mem.user.email,
                             "id" : mem.id,
+                            "role" : mem.role,
                             # TODO : NEED TO ADD IMAGE 
                         }
                         members.append(member)
@@ -889,9 +891,105 @@ class ProjectSingleProjectMember(APIView):
                     return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
         else:
             return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
+    def patch(self, request, userId, organizationId,projectId):
+        user = self.get_object_or_404(User, id=userId)
+        data = request.data
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
+        organization = self.get_object_or_404(Organization, id=organizationId)
+        if not organization:
+            return Response({'error': 'Organization not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Query optimization with select_related (if applicable)
+        # employee = self.get_object_or_404(Employee, user=user, organization=organization)
+        # if not employee:
+        #     return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+
         
 
-        # Serialize and return project data
+        # Fetch the employee along with their teams using prefetch_related
+        employee = Employee.objects.filter(organization=organization, user=user)
+
+        if employee:
+            # Get all teams that the employee is part of as a list of IDs
+            members = []
+            project = self.get_object_or_404(Project, organization=organization,id = projectId)
+            if not project:
+                return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                if project.members.filter(id=employee[0].id).exists() and (employee[0].role == 'ADMIN' or employee[0].role == 'EDITOR'):
+                    email = request.data['email']
+                    role = request.data['role']
+                    usr = User.objects.filter(email = email)
+                    if(len(usr) == 1):
+                        employ = Employee.objects.filter(organization=organization, user=usr[0]).first()
+                        if(employ):
+                            employ.role = role
+                            employ.save()
+                            return Response({'data': 'Member Role Edited'}, status=status.HTTP_200_OK)
+
+
+                        else:
+                            return Response({'error': 'Something Went Wrong..'}, status=status.HTTP_404_NOT_FOUND)
+
+                        
+                    else:
+                        return Response({'error': 'Something Went Wrong..'}, status=status.HTTP_404_NOT_FOUND)
+
+                    
+                else:
+                    return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
+    def delete(self, request, userId, organizationId,projectId):
+        user = self.get_object_or_404(User, id=userId)
+        data = request.data
+        if not user:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        organization = self.get_object_or_404(Organization, id=organizationId)
+        if not organization:
+            return Response({'error': 'Organization not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # employee = self.get_object_or_404(Employee, user=user, organization=organization)
+        # if not employee:
+        #     return Response({'error': 'Employee not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        
+
+        # Fetch the employee along with their teams using prefetch_related
+        employee = Employee.objects.filter(organization=organization, user=user)
+
+        if employee:
+            # Get all teams that the employee is part of as a list of IDs
+            members = []
+            project = self.get_object_or_404(Project, organization=organization,id = projectId)
+            if not project:
+                return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                if project.members.filter(id=employee[0].id).exists() and (employee[0].role == 'ADMIN' or employee[0].role == 'EDITOR'):
+                    email = request.data['email']
+                    role = request.data['role']
+                    usr = User.objects.filter(email = email)
+                    if(len(usr) == 1):
+                        employ = Employee.objects.filter(organization=organization, user=usr[0]).first()
+                        if(employ):
+                            employ.delete()
+                            return Response({'data': 'Member Successfully Deleted'}, status=status.HTTP_200_OK)
+
+
+                        else:
+                            return Response({'error': 'Something Went Wrong..'}, status=status.HTTP_404_NOT_FOUND)
+
+                        
+                    else:
+                        return Response({'error': 'Something Went Wrong..'}, status=status.HTTP_404_NOT_FOUND)
+
+                    
+                else:
+                    return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({'error': 'Access Denied'}, status=status.HTTP_404_NOT_FOUND)
+
+
+
