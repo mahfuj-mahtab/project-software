@@ -63,20 +63,7 @@ class ProjectOrganization(APIView):
         org.save()
 
         return Response({'success' : 'Organization Name Updated'},status=status.HTTP_200_OK)
-    def delete(self,request,userId):
-        try:
-            user = User.objects.get(id = userId)
-        except User.DoesNotExist:
-            return Response({'error': 'User not available'},status = status.HTTP_403_FORBIDDEN)
 
-        data = request.data
-        try:
-            org = Organization.objects.get(id = data['organization_id'])
-        except Organization.DoesNotExist:
-            return Response({'error': 'Organization not available'},status = status.HTTP_403_FORBIDDEN)
-        org.delete()
-
-        return Response({'success' : 'Organization Deleted Successfully'},status=status.HTTP_200_OK)
 class FetchAllDueAndUpcomingTask(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, u_id):
@@ -244,6 +231,21 @@ class ProjectProject(APIView):
         project.members.set([employee])
         project.save()
         return Response({'success' : 'Project Created'},status=status.HTTP_200_OK)
+    def delete(self,request,userId,organizationId):
+        try:
+            user = User.objects.get(id = userId)
+        except User.DoesNotExist:
+            return Response({'error': 'User not available'},status = status.HTTP_403_FORBIDDEN)
+
+        data = request.data
+        print(data)
+        try:
+            org = Organization.objects.get(id = organizationId)
+        except Organization.DoesNotExist:
+            return Response({'error': 'Organization not available'},status = status.HTTP_403_FORBIDDEN)
+        org.delete()
+
+        return Response({'success' : 'Organization Deleted Successfully'},status=status.HTTP_200_OK)
 class ProjectSingleProject(APIView):
     permission_classes = [IsAuthenticated]
 
